@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+import sys
+import re
+
+
+def convert_bin_to_dec(temp):
+	chunk1 = temp[:8]
+	chunk2 = temp[8:16]
+	chunk3 = temp[16:24]
+	chunk4 = temp[24:]
+	return f'{int(chunk1, 2)}.{int(chunk2, 2)}.{int(chunk3, 2)}.{int(chunk4, 2)}'
+
+
+def format_output(ip, cdir, hosts, mask, network, broadcast, first, last):
+	l1 = f'Address:        {ip}\n'
+	l2 = f'Network:        {network}/{cdir}\n'
+	l3 = f'Netmask:        {mask}\n'
+	l4 = f'Broadcast:      {broadcast}\n'
+	l5 = f'HostMin:        {first}\n'
+	l6 = f'HostMax:        {last}\n'
+	l7 = f'Hosts:          {hosts}'
+	return l1 + l2 + l3 + l4 + l5 + l6 + l7 + '\n'
+
+
+def usage():
+	print(f'python3 {sys.argv[0]} 10.10.22.33/27')
+
+
+def main(addr):
+	try:
+		ip, cdir = addr.split('/')
+	except:
+		usage()
+		sys.exit(1)
+
+	try:
+		bits = 32 - int(cdir)
+	except:
+		usage()
+		sys.exit(1)
+
+	if bits < 0 or bits > 32:
+		usage()
+		sys.exit(1)
+
+	hosts = 2 ** bits - 2
+
+
+	try:
+		oct1, oct2, oct3, oct4 = ip.split('.')
+	except:
+		usage()
+		sys.exit(1)
+
+	try:
+		parts = [int(oct1), int(oct2), int(oct3), int(oct4)]
+	except:
+		usage()
+		sys.exit(1)
+
+	for part in parts:
+		if part < 0 or part > 255:
+			usage()
+			sys.exit(1)
+
+	bin1 = bin(int(oct1))[2:].rjust(8, '0')
+	bin2 = bin(int(oct2))[2:].rjust(8, '0')
+	bin3 = bin(int(oct3))[2:].rjust(8, '0')
+	bin4 = bin(int(oct4))[2:].rjust(8, '0')
+
+	bin_ip = f'{bin1}{bin2}{bin3}{bin4}'
+
+	bin_mask = '1' * int(cdir) + '0' * bits
+	bin_network = bin_ip[:int(cdir)].ljust(32, '0')
+	bin_broadcast = bin_ip[:int(cdir)].ljust(32, '1')
+	bin_first = bin_ip[:int(cdir)].ljust(31, '0') + '1'
+	bin_last = bin_ip[:int(cdir)].ljust(31, '1') + '0'
+
+
+	if int(cdir) == 31:
+		hosts = 2
+		bin_first = bin_network
+		bin_last = bin_broadcast
+
+	mask = convert_bin_to_dec(bin_mask)
+	network = convert_bin_to_dec(bin_network)
+	broadcast = convert_bin_to_dec(bin_broadcast)
+	first  = convert_bin_to_dec(bin_first)
+	last = convert_bin_to_dec(bin_last)
+
+	output = format_output(ip, cdir, hosts, mask, network, broadcast, first, last)
+	if int(cdir) == 32:
+		output = f'Address:        {ip}\n'
+
+	print(output, end='')
+
+
+if __name__ == '__main__':
+
+	args = sys.argv
+	if len(args) != 2:
+		usage()
+		sys.exit(1)
+
+	addr = args[1]
+	main(addr)
