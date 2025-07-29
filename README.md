@@ -8,4 +8,4 @@ There's a bunch of tools out there that do the same thing. I only did this to le
 python3 subnetfy 10.10.22.34/31 
 ```
 
-![](images/subnet.png)
+![](subnet.png)
